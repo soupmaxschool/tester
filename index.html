@@ -80,6 +80,7 @@
 <iframe id="p" allowfullscreen></iframe>
 
 <script>
+// Extract video ID from URL
 function getId(url) {
   try {
     const u = new URL(url);
@@ -90,11 +91,13 @@ function getId(url) {
   return m ? m[1] : null;
 }
 
+// Load video into iframe
 function loadVideo(id) {
   document.getElementById('p').src =
     "https://www.youtube.com/embed/" + encodeURIComponent(id);
 }
 
+// Load from pasted URL
 function loadFromInput() {
   const val = document.getElementById('u').value.trim();
   const id = getId(val);
@@ -107,44 +110,36 @@ document.getElementById('u').addEventListener('keydown', e => {
   if (e.key === "Enter") loadFromInput();
 });
 
-// ⭐ WORKING SEARCH (no HTML scraping)
+// ⭐ WORKING SEARCH (Piped API)
 async function search() {
   const q = document.getElementById('s').value.trim();
   if (!q) return;
 
-  // Get YouTube suggestions
-  const url =
-    "https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=" +
+  const api =
+    "https://pipedapi.kavin.rocks/search?q=" +
     encodeURIComponent(q);
 
-  const data = await (await fetch(url)).json();
-  const suggestions = data[1].slice(0, 10);
+  const data = await (await fetch(api)).json();
 
   const results = document.getElementById('results');
   results.innerHTML = "";
 
-  // For each suggestion, search YouTube via normal results page
-  for (const term of suggestions) {
-    const searchUrl =
-      "https://www.youtube.com/results?search_query=" +
-      encodeURIComponent(term);
-
-    const html = await (await fetch(searchUrl)).text();
-
-    const match = html.match(/"videoId":"(.*?)"/);
-    if (!match) continue;
-
-    const id = match[1];
-
-    const div = document.createElement('div');
-    div.className = "item";
-    div.innerHTML = `
-      <img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg">
-      <div>${term}</div>
-    `;
-    div.onclick = () => loadVideo(id);
-    results.appendChild(div);
-  }
+  data.items
+    .filter(v => v.type === "video")
+    .slice(0, 12)
+    .forEach(v => {
+      const div = document.createElement('div');
+      div.className = "item";
+      div.innerHTML = `
+        <img src="${v.thumbnail}" />
+        <div>
+          <b>${v.title}</b><br>
+          <small>${v.uploaderName}</small>
+        </div>
+      `;
+      div.onclick = () => loadVideo(v.id);
+      results.appendChild(div);
+    });
 }
 
 document.getElementById('sbtn').onclick = search;
@@ -152,7 +147,6 @@ document.getElementById('s').addEventListener('keydown', e => {
   if (e.key === "Enter") search();
 });
 </script>
-
 
 </body>
 </html>
