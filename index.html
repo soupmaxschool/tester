@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>YT Viewer</title>
+<title>YT Viewer + Search</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body {
@@ -19,24 +19,44 @@
     text-align: center;
     background: #111;
   }
-  #u {
-    width: 70%;
-    max-width: 640px;
+  #u, #s {
+    width: 60%;
+    max-width: 600px;
     padding: 8px 12px;
     font-size: 15px;
     border-radius: 999px;
     border: none;
     outline: none;
+    margin: 4px;
   }
-  #btn {
+  #btn, #sbtn {
     padding: 8px 14px;
-    margin-left: 8px;
     font-size: 15px;
     border-radius: 999px;
     border: none;
     cursor: pointer;
     background: #ff0000;
     color: #fff;
+    margin: 4px;
+  }
+  #results {
+    background: #111;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 40vh;
+  }
+  .item {
+    display: flex;
+    gap: 10px;
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #222;
+  }
+  .item img {
+    width: 120px;
+    height: 68px;
+    object-fit: cover;
+    border-radius: 6px;
   }
   iframe {
     flex: 1;
@@ -48,9 +68,14 @@
 <body>
 
 <div id="top">
-  <input id="u" placeholder="Paste YouTube URL and press Enter" autofocus>
+  <input id="u" placeholder="Paste YouTube URL and press Enter">
   <button id="btn">Load</button>
+  <br>
+  <input id="s" placeholder="Search YouTube">
+  <button id="sbtn">Search</button>
 </div>
+
+<div id="results"></div>
 
 <iframe id="p" allowfullscreen></iframe>
 
@@ -65,19 +90,57 @@ function getId(url) {
   return m ? m[1] : null;
 }
 
-function load() {
-  const val = document.getElementById('u').value.trim();
-  const id = getId(val);
-  if (!id) return alert("Invalid URL");
-
-  // ⭐ REVERTED: original YouTube embed
+function loadVideo(id) {
   document.getElementById('p').src =
     "https://www.youtube.com/embed/" + encodeURIComponent(id);
 }
 
-document.getElementById('btn').onclick = load;
+function loadFromInput() {
+  const val = document.getElementById('u').value.trim();
+  const id = getId(val);
+  if (!id) return alert("Invalid URL");
+  loadVideo(id);
+}
+
+document.getElementById('btn').onclick = loadFromInput;
 document.getElementById('u').addEventListener('keydown', e => {
-  if (e.key === "Enter") load();
+  if (e.key === "Enter") loadFromInput();
+});
+
+// ⭐ YouTube search (no API key needed)
+async function search() {
+  const q = document.getElementById('s').value.trim();
+  if (!q) return;
+
+  const url = "https://www.youtube.com/results?search_query=" +
+              encodeURIComponent(q);
+
+  const html = await (await fetch(url)).text();
+
+  // Extract video IDs from YouTube search HTML
+  const ids = [...html.matchAll(/"videoId":"(.*?)"/g)]
+              .map(m => m[1])
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .slice(0, 10);
+
+  const results = document.getElementById('results');
+  results.innerHTML = "";
+
+  ids.forEach(id => {
+    const div = document.createElement('div');
+    div.className = "item";
+    div.innerHTML = `
+      <img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg">
+      <div>https://youtu.be/${id}</div>
+    `;
+    div.onclick = () => loadVideo(id);
+    results.appendChild(div);
+  });
+}
+
+document.getElementById('sbtn').onclick = search;
+document.getElementById('s').addEventListener('keydown', e => {
+  if (e.key === "Enter") search();
 });
 </script>
 
