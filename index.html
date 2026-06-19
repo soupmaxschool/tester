@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>YT Viewer + Built‑In Search</title>
+<title>YT Viewer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body {
@@ -19,17 +19,18 @@
     text-align: center;
     background: #111;
   }
-  #s {
+  #u {
     width: 70%;
-    max-width: 600px;
+    max-width: 640px;
     padding: 8px 12px;
     font-size: 15px;
     border-radius: 999px;
     border: none;
     outline: none;
   }
-  #sbtn {
+  #btn {
     padding: 8px 14px;
+    margin-left: 8px;
     font-size: 15px;
     border-radius: 999px;
     border: none;
@@ -47,25 +48,41 @@
 <body>
 
 <div id="top">
-  <input id="s" placeholder="Search YouTube">
-  <button id="sbtn">Search</button>
+  <input id="u" placeholder="Paste YouTube URL and press Enter">
+  <button id="btn">Load</button>
 </div>
 
-<iframe id="frame" src="https://m.youtube.com"></iframe>
+<iframe id="p" allowfullscreen></iframe>
 
 <script>
-function search() {
-  const q = document.getElementById('s').value.trim();
-  if (!q) return;
-
-  // ⭐ Load YouTube search page directly
-  document.getElementById('frame').src =
-    "https://m.youtube.com/results?search_query=" + encodeURIComponent(q);
+// Extract video ID
+function getId(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+    if (u.searchParams.get('v')) return u.searchParams.get('v');
+  } catch (e) {}
+  const m = url.match(/v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/);
+  return m ? m[1] : null;
 }
 
-document.getElementById('sbtn').onclick = search;
-document.getElementById('s').addEventListener('keydown', e => {
-  if (e.key === "Enter") search();
+// Load video
+function loadVideo(id) {
+  document.getElementById('p').src =
+    "https://www.youtube.com/embed/" + encodeURIComponent(id);
+}
+
+// Load from pasted URL
+function loadFromInput() {
+  const val = document.getElementById('u').value.trim();
+  const id = getId(val);
+  if (!id) return alert("Invalid URL");
+  loadVideo(id);
+}
+
+document.getElementById('btn').onclick = loadFromInput;
+document.getElementById('u').addEventListener('keydown', e => {
+  if (e.key === "Enter") loadFromInput();
 });
 </script>
 
