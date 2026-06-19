@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Ad‑Free YT Viewer</title>
+<title>YT Viewer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body {
@@ -70,11 +70,9 @@ function load() {
   const id = getId(val);
   if (!id) return alert("Invalid URL");
 
-  // ⭐ Official ad‑free YouTube embed
+  // ⭐ REVERTED: original YouTube embed
   document.getElementById('p').src =
-    "https://www.youtube-nocookie.com/embed/" +
-    encodeURIComponent(id) +
-    "?rel=0&modestbranding=1&iv_load_policy=3&fs=1";
+    "https://www.youtube.com/embed/" + encodeURIComponent(id);
 }
 
 document.getElementById('btn').onclick = load;
