@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>YT Viewer + Search</title>
+<title>YT Viewer + RSS Search</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body {
@@ -80,7 +80,7 @@
 <iframe id="p" allowfullscreen></iframe>
 
 <script>
-// Extract video ID from URL
+// Extract video ID
 function getId(url) {
   try {
     const u = new URL(url);
@@ -91,7 +91,7 @@ function getId(url) {
   return m ? m[1] : null;
 }
 
-// Load video into iframe
+// Load video
 function loadVideo(id) {
   document.getElementById('p').src =
     "https://www.youtube.com/embed/" + encodeURIComponent(id);
@@ -110,36 +110,40 @@ document.getElementById('u').addEventListener('keydown', e => {
   if (e.key === "Enter") loadFromInput();
 });
 
-// ⭐ WORKING SEARCH (Piped API)
+// ⭐ WORKING SEARCH (YouTube RSS feed)
 async function search() {
   const q = document.getElementById('s').value.trim();
   if (!q) return;
 
   const api =
-    "https://pipedapi.kavin.rocks/search?q=" +
+    "https://www.youtube.com/feeds/videos.xml?search_query=" +
     encodeURIComponent(q);
 
-  const data = await (await fetch(api)).json();
+  const xmlText = await (await fetch(api)).text();
+  const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+
+  const entries = [...xml.getElementsByTagName("entry")];
 
   const results = document.getElementById('results');
   results.innerHTML = "";
 
-  data.items
-    .filter(v => v.type === "video")
-    .slice(0, 12)
-    .forEach(v => {
-      const div = document.createElement('div');
-      div.className = "item";
-      div.innerHTML = `
-        <img src="${v.thumbnail}" />
-        <div>
-          <b>${v.title}</b><br>
-          <small>${v.uploaderName}</small>
-        </div>
-      `;
-      div.onclick = () => loadVideo(v.id);
-      results.appendChild(div);
-    });
+  entries.forEach(entry => {
+    const id = entry.getElementsByTagName("yt:videoId")[0].textContent;
+    const title = entry.getElementsByTagName("title")[0].textContent;
+    const author = entry.getElementsByTagName("name")[0].textContent;
+
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg">
+      <div>
+        <b>${title}</b><br>
+        <small>${author}</small>
+      </div>
+    `;
+    div.onclick = () => loadVideo(id);
+    results.appendChild(div);
+  });
 }
 
 document.getElementById('sbtn').onclick = search;
