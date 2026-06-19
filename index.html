@@ -107,35 +107,44 @@ document.getElementById('u').addEventListener('keydown', e => {
   if (e.key === "Enter") loadFromInput();
 });
 
-// ⭐ YouTube search (no API key needed)
+// ⭐ WORKING SEARCH (no HTML scraping)
 async function search() {
   const q = document.getElementById('s').value.trim();
   if (!q) return;
 
-  const url = "https://www.youtube.com/results?search_query=" +
-              encodeURIComponent(q);
+  // Get YouTube suggestions
+  const url =
+    "https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=" +
+    encodeURIComponent(q);
 
-  const html = await (await fetch(url)).text();
-
-  // Extract video IDs from YouTube search HTML
-  const ids = [...html.matchAll(/"videoId":"(.*?)"/g)]
-              .map(m => m[1])
-              .filter((v, i, a) => a.indexOf(v) === i)
-              .slice(0, 10);
+  const data = await (await fetch(url)).json();
+  const suggestions = data[1].slice(0, 10);
 
   const results = document.getElementById('results');
   results.innerHTML = "";
 
-  ids.forEach(id => {
+  // For each suggestion, search YouTube via normal results page
+  for (const term of suggestions) {
+    const searchUrl =
+      "https://www.youtube.com/results?search_query=" +
+      encodeURIComponent(term);
+
+    const html = await (await fetch(searchUrl)).text();
+
+    const match = html.match(/"videoId":"(.*?)"/);
+    if (!match) continue;
+
+    const id = match[1];
+
     const div = document.createElement('div');
     div.className = "item";
     div.innerHTML = `
       <img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg">
-      <div>https://youtu.be/${id}</div>
+      <div>${term}</div>
     `;
     div.onclick = () => loadVideo(id);
     results.appendChild(div);
-  });
+  }
 }
 
 document.getElementById('sbtn').onclick = search;
@@ -143,6 +152,7 @@ document.getElementById('s').addEventListener('keydown', e => {
   if (e.key === "Enter") search();
 });
 </script>
+
 
 </body>
 </html>
