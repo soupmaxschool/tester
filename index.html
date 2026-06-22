@@ -29,7 +29,7 @@
     background: none;
     border: none;
     color: #fff;
-    font-size: 18px;
+    font-size: 22px;
     cursor: pointer;
   }
 
@@ -52,14 +52,14 @@
     cursor: pointer;
   }
 
-  /* Layout */
+  /* Layout container */
   #container {
     display: flex;
     height: calc(100vh - 56px);
     overflow: hidden;
   }
 
-  /* Watch page */
+  /* WATCH PAGE */
   #watchPage {
     flex: 1;
     display: flex;
@@ -72,12 +72,13 @@
     border: 0;
   }
 
-  /* Sidebar */
+  /* SIDEBAR */
   #sidebar {
     width: 360px;
     background: #0f0f0f;
     border-left: 1px solid #222;
     overflow-y: auto;
+    display: block;
   }
 
   #results {
@@ -153,8 +154,10 @@
   /* FOR YOU PAGE */
   #forYouPage {
     display: none;
-    padding: 20px;
+    width: 100%;
+    height: 100%;
     overflow-y: auto;
+    padding: 20px;
   }
 
   #forYouGrid {
@@ -216,7 +219,7 @@
 </div>
 
 <script>
-/* LocalStorage history */
+/* Save watch history */
 function saveHistory(video) {
   let history = JSON.parse(localStorage.getItem("history") || "[]");
   history.unshift(video);
@@ -278,11 +281,13 @@ async function search() {
   });
 }
 
-/* For You Page */
+/* FOR YOU PAGE */
 function showForYou() {
   document.getElementById("watchPage").style.display = "none";
   document.getElementById("sidebar").style.display = "none";
-  document.getElementById("forYouPage").style.display = "block";
+
+  const fy = document.getElementById("forYouPage");
+  fy.style.display = "block";
 
   const grid = document.getElementById("forYouGrid");
   grid.innerHTML = "";
@@ -305,6 +310,7 @@ function showForYou() {
   });
 }
 
+/* WATCH PAGE */
 function showWatchPage() {
   document.getElementById("watchPage").style.display = "flex";
   document.getElementById("sidebar").style.display = "block";
